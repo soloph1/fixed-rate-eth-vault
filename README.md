@@ -39,6 +39,48 @@ Take a look here for contract addresses for giant pools: https://github.com/stak
   example transaction for claimRewards - https://goerli.etherscan.io/tx/0xb47e1ee404b70707216d4ffca46b4b90eb2828684a9a7a4ae4b5d901499d1fa5
 - Increase test coverage
 
+## Implementation
+
+### Vault contract
+
+- Vault contract itself is ERC20 token represents the pool share of the user.
+- Owner can update annual fixed rate and strategy contract address.
+- Users can deposit ETH and get shares of the vault. And the deposited ETH is transferred to the strategy.
+  Here `shares = amount / index` where `index` is increased by time (based on annual fixed rate)
+- Users can withdraw amount based on their shares of the vault.
+  Here `amount = share * index` where `index` is increased by time (based on annual fixed rate)
+
+### Strategy contract
+
+- updateManager
+  Owner can set manager of the strategy.
+- updateDEthUniswapV3PoolFee
+  Manager can update the fee of DETH/ETH Uniswap V3 Pool.
+  This pool fee is used to swap DETH to ETH in `sellDETH` function.
+- depositETH
+  Manager can deposit ETH into `Giant Protected Staking Pool` or `Giant Fees And Mev Pool`.
+- withdrawETH
+  Manager can withdraw ETH from `Giant Protected Staking Pool` or `Giant Fees And Mev Pool`.
+- withdrawDETH
+  Manager can withdraw DETH from `Giant Protected Staking Pool`.
+  Here if `sell` flag is true, then it will automatically sell withdrawn DETH to ETH vai Uniswap V3.
+- sellDETH
+  Manager can well DETH withdrawn from `Giant Protected Staking Pool`.
+  This function will be called with sell flag of `withdrawDETH` function.
+- claimRewards
+  Manager can claim rewards from `Giant Fees And Mev Pool`.
+- withdrawManagerProfit
+  Manager can withdraw excess profit.
+  `profit = totalETH of stratey - totalETH owed to users`
+- withdraw
+  This function is only called through vault contract when users try to withdraw their ETH.
+  It checks the ETH balance of strategy.
+  If ETH balance is not enough, it will withdraw ETH from `Giant Protected Staking Pool` for the lack of quantity.
+  If it's even not enough, it will withdraw ETH from `Giant Fees And Mev Pool`.
+  Then it will withdraw ETH to users.
+  ** here we can update this withdraw logic if we want.
+  e.g. we can try to withdarw half of lack from `Giant Protected Staking Pool` and another half from `Giant Fees And Mev Pool`.
+
 ## Hardhat
 
 ### Update `.env`

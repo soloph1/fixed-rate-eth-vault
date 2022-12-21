@@ -58,6 +58,28 @@ describe("Strategy Test", () => {
     await ethers.provider.send("evm_mine", []);
   })
 
+  it("updateManager", async () => {
+    expect(await strategy.manager()).to.equal(manager.address);
+
+    // non-owner can't set strategy
+    await expect(strategy.connect(user1).updateManager(user1.address)).to.revertedWith('Ownable: caller is not the owner');
+
+    // owner can set strategy
+    await strategy.updateManager(user1.address);
+    expect(await strategy.manager()).to.equal(user1.address);
+  })
+
+  it("updateDEthUniswapV3PoolFee", async () => {
+    expect(await strategy.dEthUniswapV3PoolFee()).to.equal(500);
+
+    // non-manager can't set strategy
+    await expect(strategy.connect(user1).updateDEthUniswapV3PoolFee(3000)).to.revertedWith('unauthorized');
+
+    // manager can set strategy
+    await strategy.connect(manager).updateDEthUniswapV3PoolFee(3000);
+    expect(await strategy.dEthUniswapV3PoolFee()).to.equal(3000);
+  })
+
   it("depositETH", async () => {
     // check manager authorized
     await expect(strategy.depositETH(GIANT_PROTECTED_STAKING_POOL, amount.mul(2))).to.revertedWith('unauthorized');
@@ -239,20 +261,20 @@ describe("Strategy Test", () => {
       await strategy.connect(manager).depositETH(GIANT_PROTECTED_STAKING_POOL, amount);
       await strategy.connect(manager).depositETH(GIANT_FEES_AND_MEV_POOL, amount);
 
-      await vault.connect(user1).withdraw(amount);
+      await vault.connect(user1).withdraw(await vault.balanceOf(user1.address));
     })
 
     it("withdraw from giantProtectedStakingPool if eth not avaialble in strategy", async () => {
       await strategy.connect(manager).depositETH(GIANT_PROTECTED_STAKING_POOL, amount);
       await strategy.connect(manager).depositETH(GIANT_FEES_AND_MEV_POOL, amount.mul(2));
 
-      await vault.connect(user1).withdraw(amount);
+      await vault.connect(user1).withdraw(await vault.balanceOf(user1.address));
     })
 
     it("withdraw from both giantProtectedStakingPool & feesAndMevPool if eth not avaialble in strategy", async () => {
       await strategy.connect(manager).depositETH(GIANT_FEES_AND_MEV_POOL, amount.mul(3));
 
-      await vault.connect(user1).withdraw(amount);
+      await vault.connect(user1).withdraw(await vault.balanceOf(user1.address));
     })
 
     it("can't withdraw when insufficient fund", async () => {
@@ -264,7 +286,7 @@ describe("Strategy Test", () => {
       ]);
       await network.provider.send("evm_mine");
 
-      await expect(vault.connect(user1).withdraw(amount)).to.revertedWith('insufficient fund');
+      await expect(vault.connect(user1).withdraw(await vault.balanceOf(user1.address))).to.revertedWith('insufficient fund');
     })
   })
 });

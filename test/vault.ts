@@ -120,9 +120,5 @@ describe("Vault Test", () => {
 
     expect(await vault.balanceOf(user1.address)).to.equal(0);
     expect(await vault.balanceOf(user2.address)).to.equal(0);
-
-    // no assets
-    expect(await vault.convertToAssets(amount)).to.equal(amount);
-    expect(await vault.convertToShares(amount)).to.equal(amount);
   })
 });

@@ -29,10 +29,10 @@ contract Strategy is IStrategy, Ownable, ReentrancyGuard {
     IERC20 public immutable dETH;
     IWeth public immutable wETH;
     IV3SwapRouter public immutable uniswapV3Router;
-    uint24 public immutable dEthUniswapV3PoolFee;
+    address public immutable vault;
 
-    address public vault;
     address public manager;
+    uint24 public dEthUniswapV3PoolFee;
 
     receive() external payable {}
 
@@ -59,6 +59,13 @@ contract Strategy is IStrategy, Ownable, ReentrancyGuard {
     }
 
     /**
+     * @dev Update manager address
+     */
+    function updateManager(address _manager) external onlyOwner {
+        manager = _manager;
+    }
+
+    /**
      * @dev Total ETH balance owned by strategy
      */
     function totalETH() public view returns (uint256) {
@@ -71,6 +78,14 @@ contract Strategy is IStrategy, Ownable, ReentrancyGuard {
     }
 
     /// pool manage logic
+
+    /**
+     * @dev Update Fee of DETH/ETH Uniswap V3 Pool (this is used to swap DETH to ETH)
+     */
+    function updateDEthUniswapV3PoolFee(uint24 _dEthUniswapV3PoolFee) external {
+        require(msg.sender == manager, "unauthorized");
+        dEthUniswapV3PoolFee = _dEthUniswapV3PoolFee;
+    }
 
     /**
      * @dev deposit ETH into giant Pools (called by manager)

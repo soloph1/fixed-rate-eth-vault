@@ -72,12 +72,7 @@ contract Vault is IVault, Ownable, ERC20, ReentrancyGuard {
         view
         returns (uint256 shares)
     {
-        uint256 _totalAssets = totalAssets();
-        if (_totalAssets == 0) {
-            return assets;
-        }
-
-        return (assets * totalSupply()) / _totalAssets;
+        return assets * DENOMINATOR / getCurrentIndex();
     }
 
     /**
@@ -89,12 +84,7 @@ contract Vault is IVault, Ownable, ERC20, ReentrancyGuard {
         view
         returns (uint256 assets)
     {
-        uint256 _totalSupply = totalSupply();
-        if (_totalSupply == 0) {
-            return shares;
-        }
-
-        return (shares * totalAssets()) / _totalSupply;
+        return (shares * getCurrentIndex()) / DENOMINATOR;
     }
 
     /**
